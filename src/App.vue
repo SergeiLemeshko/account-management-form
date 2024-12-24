@@ -1,9 +1,9 @@
 <template>
-  <HomeView />
+  <MainView />
 </template>
 
 <script setup lang="ts">
-import HomeView from '@/views/HomeView.vue'
+import MainView from '@/views/MainView.vue';
 </script>
 
 <style scoped></style>

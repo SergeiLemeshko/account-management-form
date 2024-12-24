@@ -1,33 +1,33 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { type IAccount } from '@/lib/types'
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+import { type IAccount } from '@/lib/types';
 
 export const useAccountsStore = defineStore('accounts', () => {
-  const accounts = ref<IAccount[]>([])
+  const accounts = ref<IAccount[]>([]);
 
   const loadAccounts = () => {
-    const savedAccounts = localStorage.getItem('accounts')
-    accounts.value = savedAccounts ? JSON.parse(savedAccounts) : []
-  }
+    const savedAccounts = localStorage.getItem('accounts');
+    accounts.value = savedAccounts ? JSON.parse(savedAccounts) : [];
+  };
 
   const saveAccounts = () => {
-    localStorage.setItem('accounts', JSON.stringify(accounts.value))
-  }
+    localStorage.setItem('accounts', JSON.stringify(accounts.value));
+  };
 
   const addAccount = (account: IAccount) => {
-    accounts.value.push(account)
-    saveAccounts()
-  }
+    accounts.value.push(account);
+    saveAccounts();
+  };
 
   const removeAccount = (index: number) => {
-    accounts.value.splice(index, 1)
-    saveAccounts()
-  }
+    accounts.value.splice(index, 1);
+    saveAccounts();
+  };
 
   const updateAccount = (index: number, updatedAccount: IAccount) => {
-    accounts.value[index] = updatedAccount
-    saveAccounts()
-  }
+    accounts.value[index] = updatedAccount;
+    saveAccounts();
+  };
 
   return {
     accounts,
@@ -36,5 +36,5 @@ export const useAccountsStore = defineStore('accounts', () => {
     addAccount,
     removeAccount,
     updateAccount,
-  }
-})
+  };
+});
