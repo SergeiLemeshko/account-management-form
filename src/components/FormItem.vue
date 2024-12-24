@@ -1,14 +1,11 @@
 <template>
-  <div class="form-item">
+  <div class="form">
     <Form
       novalidate
       layout="inline"
     >
       <AntForm layout="inline">
-        <FormItem
-          label="Метки"
-          v-bind="labelFieldProps"
-        >
+        <FormItem v-bind="labelFieldProps">
           <Input
             name="labels"
             :value="labelFieldValue"
@@ -19,7 +16,6 @@
           />
         </FormItem>
         <FormItem
-          label="Тип записи"
           v-bind="typeFieldProps"
           required
         >
@@ -29,16 +25,17 @@
             placeholder="Выберите значение"
             :options="typeOptions"
             hide-tooltip
+            class="form__select"
             @change="updateType"
           />
         </FormItem>
         <FormItem
-          label="Логин"
           required
           v-bind="loginFieldProps"
         >
           <Input
             name="login"
+            :class="{ widthInput: !isSelectedValueInSelect }"
             :value="loginFieldValue"
             :maxlength="100"
             placeholder="Login"
@@ -47,12 +44,11 @@
           />
         </FormItem>
         <FormItem
-          v-if="typeFieldValue === 'Локальная' || typeFieldValue === ''"
-          label="Пароль"
+          v-if="isSelectedValueInSelect"
           required
           v-bind="passwordFieldProps"
         >
-          <Input
+          <InputPassword
             name="password"
             :value="passwordFieldValue"
             :maxlength="100"
@@ -61,7 +57,11 @@
             @blur="updatePassword"
           />
         </FormItem>
-        <Button @click="removeAccount">Удалить</Button>
+        <Button @click="removeAccount">
+          <template #icon>
+            <ShoppingCartOutlined />
+          </template>
+        </Button>
       </AntForm>
     </Form>
   </div>
@@ -73,9 +73,10 @@ import { antConfig } from '@/lib/antConfig';
 import { defineProps, computed } from 'vue';
 import { useForm, Form } from 'vee-validate';
 import { useAccountsStore } from '@/stores/accountStore';
+import { ShoppingCartOutlined } from '@ant-design/icons-vue';
 import type { IAccount, IAccountForm, TypeRecord } from '@/lib/types';
 import type { DefaultOptionType, SelectValue } from 'ant-design-vue/es/select';
-import { Input, FormItem, Form as AntForm, Select, Button } from 'ant-design-vue';
+import { Input, FormItem, Form as AntForm, Select, Button, InputPassword } from 'ant-design-vue';
 
 const props = defineProps<{
   index: number;
@@ -83,7 +84,11 @@ const props = defineProps<{
 }>();
 
 const store = useAccountsStore();
+
 const account = computed(() => store.accounts[props.index]);
+const isSelectedValueInSelect = computed(
+  () => typeFieldValue.value === 'Локальная' || typeFieldValue.value === '',
+);
 
 interface IOption extends DefaultOptionType {
   value: TypeRecord;
@@ -125,6 +130,7 @@ const updateType = (value: SelectValue) => {
     });
     updatePassword();
   }
+  console.log(store.accounts);
 };
 
 const updateLabels = () => {
@@ -218,9 +224,17 @@ const addingValuesFromInput = (field: string, value: string = '') => {
 };
 </script>
 
-<style scoped>
-.form-item {
-  margin-bottom: 1rem;
+<style scoped lang="scss">
+.form {
+  margin-bottom: 1.5rem;
+
+  &__select {
+    width: 185px;
+  }
+
+  .widthInput {
+    width: 400px;
+  }
 }
 </style>
 
