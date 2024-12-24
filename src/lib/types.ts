@@ -1,6 +1,7 @@
 export type TypeRecord = 'LDAP' | 'Локальная';
 
 export interface IAccount {
+  id: number;
   labelArray?: { text: string }[];
   type: string;
   login: string;

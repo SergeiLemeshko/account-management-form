@@ -26,7 +26,7 @@
 
     <div
       v-for="(item, index) in accounts"
-      :key="index"
+      :key="item.id"
     >
       <FormItem
         :account="item"
@@ -50,6 +50,7 @@ const accounts = computed(() => store.accounts);
 
 const addAccount = () => {
   store.addAccount({
+    id: Date.now(),
     labelArray: [{ text: '' }],
     type: '',
     login: '',

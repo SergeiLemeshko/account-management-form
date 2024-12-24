@@ -20,7 +20,7 @@ export const useAccountsStore = defineStore('accounts', () => {
   };
 
   const removeAccount = (index: number) => {
-    accounts.value.splice(index, 1);
+    accounts.value = accounts.value.filter((_, i) => i !== index);
     saveAccounts();
   };
 
