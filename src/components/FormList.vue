@@ -18,8 +18,6 @@ const accounts = computed(() => store.accounts)
 
 const addAccount = () => {
   store.addAccount({
-    id: Date.now(),
-    label: '',
     labelArray: [{ text: '' }],
     type: '',
     login: '',

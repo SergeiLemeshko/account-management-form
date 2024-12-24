@@ -12,6 +12,17 @@
             @blur="updateLabels"
           />
         </FormItem>
+        <FormItem label="Тип записи">
+          <Select
+            v-model:value="typeFieldValue"
+            allow-clear
+            show-search
+            placeholder="Выберите значение"
+            :options="typeOptions"
+            hide-tooltip
+            @change="updateType"
+          />
+        </FormItem>
         <FormItem label="Логин" required v-bind="loginFieldProps">
           <Input
             name="login"
@@ -37,17 +48,6 @@
             @blur="updatePassword"
           />
         </FormItem>
-        <FormItem label="Тип записи">
-          <Select
-            v-model:value="typeFieldValue"
-            allow-clear
-            show-search
-            placeholder="Выберите значение"
-            :options="typeOptions"
-            hide-tooltip
-            @change="updateType"
-          />
-        </FormItem>
         <button @click="removeAccount">Удалить</button>
       </AntForm>
     </Form>
@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import * as yup from 'yup'
 import { Input, FormItem, Form as AntForm, Select } from 'ant-design-vue'
-import { defineProps, ref, computed } from 'vue'
+import { defineProps, computed } from 'vue'
 import { useAccountsStore } from '@/stores/accountStore'
 import { useForm, Form } from 'vee-validate'
 import { antConfig } from '@/lib/antConfig'
@@ -89,10 +89,18 @@ const updateLogin = () => {
 }
 
 const updatePassword = () => {
-  store.updateAccount(props.index, {
-    ...account.value,
-    password: passwordFieldValue.value as string,
-  })
+  if (typeFieldValue.value === 'LDAP') {
+    // Устанавливаем пароль в null, если выбран LDAP
+    store.updateAccount(props.index, {
+      ...account.value,
+      password: null,
+    })
+  } else {
+    store.updateAccount(props.index, {
+      ...account.value,
+      password: passwordFieldValue.value as string,
+    })
+  }
 }
 
 const updateType = (value: SelectValue) => {
@@ -102,12 +110,12 @@ const updateType = (value: SelectValue) => {
       ...account.value,
       type: value,
     })
+    updatePassword()
   }
 }
 
 const updateLabels = () => {
   // Получаем массив меток из значения поля ввода
-  console.log(labelFieldValue.value, '111')
   const labelArray = String(labelFieldValue.value)
     .split(';')
     .map((label) => {

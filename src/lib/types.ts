@@ -1,8 +1,6 @@
 export type TypeRecord = 'LDAP' | 'Локальная' | ''
 
 export interface IAccount {
-  id: number
-  label: string
   labelArray?: { text: string }[]
   type: string
   login: string
