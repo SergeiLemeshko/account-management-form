@@ -1,0 +1,207 @@
+<template>
+  <div class="form-item">
+    <Form novalidate layout="inline">
+      <AntForm layout="inline">
+        <FormItem label="Метки" v-bind="labelFieldProps">
+          <Input
+            name="labels"
+            :value="labelFieldValue"
+            :maxlength="50"
+            placeholder="Labels"
+            @input="filterInput('labels', $event.target.value)"
+            @blur="updateLabels"
+          />
+        </FormItem>
+        <FormItem label="Логин" required v-bind="loginFieldProps">
+          <Input
+            name="login"
+            :value="loginFieldValue"
+            :maxlength="100"
+            placeholder="Login"
+            @input="filterInput('login', $event.target.value)"
+            @blur="updateLogin"
+          />
+        </FormItem>
+        <FormItem
+          v-if="typeFieldValue === 'Локальная'"
+          label="Пароль"
+          required
+          v-bind="passwordFieldProps"
+        >
+          <Input
+            name="password"
+            :value="passwordFieldValue"
+            :maxlength="100"
+            placeholder="Password"
+            @input="filterInput('password', $event.target.value)"
+            @blur="updatePassword"
+          />
+        </FormItem>
+        <FormItem label="Тип записи">
+          <Select
+            v-model:value="typeFieldValue"
+            allow-clear
+            show-search
+            placeholder="Выберите значение"
+            :options="typeOptions"
+            hide-tooltip
+            @change="updateType"
+          />
+        </FormItem>
+        <button @click="removeAccount">Удалить</button>
+      </AntForm>
+    </Form>
+  </div>
+</template>
+
+<script setup lang="ts">
+import * as yup from 'yup'
+import { Input, FormItem, Form as AntForm, Select } from 'ant-design-vue'
+import { defineProps, ref, computed } from 'vue'
+import { useAccountsStore } from '@/stores/accountStore'
+import { useForm, Form } from 'vee-validate'
+import { antConfig } from '@/lib/antConfig'
+import type { IAccount, IAccountForm, TypeRecord } from '@/lib/types'
+import type { DefaultOptionType, SelectValue } from 'ant-design-vue/es/select'
+
+const props = defineProps<{
+  index: number
+  account: IAccount
+}>()
+
+const store = useAccountsStore()
+const account = computed(() => store.accounts[props.index])
+
+interface IOption extends DefaultOptionType {
+  value: TypeRecord
+}
+
+const typeOptions: IOption[] = [
+  { value: 'LDAP', label: 'LDAP', title: '' },
+  { value: 'Локальная', label: 'Локальная', title: '' },
+]
+
+const updateLogin = () => {
+  store.updateAccount(props.index, {
+    ...account.value,
+    login: loginFieldValue.value as string,
+  })
+}
+
+const updatePassword = () => {
+  store.updateAccount(props.index, {
+    ...account.value,
+    password: passwordFieldValue.value as string,
+  })
+}
+
+const updateType = (value: SelectValue) => {
+  if (typeof value === 'string') {
+    // Проверяем, что значение — это строка
+    store.updateAccount(props.index, {
+      ...account.value,
+      type: value,
+    })
+  }
+}
+
+const updateLabels = () => {
+  // Получаем массив меток из значения поля ввода
+  console.log(labelFieldValue.value, '111')
+  const labelArray = String(labelFieldValue.value)
+    .split(';')
+    .map((label) => {
+      const trimmedLabel = label.trim()
+      return trimmedLabel ? { text: trimmedLabel } : null
+    })
+    .filter(Boolean) // Убираем пустые значения
+
+  // Добавляем ';' в конце каждой метки, если его нет
+  const updatedLabelArray = labelArray.map((item) => {
+    return {
+      text: item?.text.endsWith(';') ? item.text : item?.text + ';',
+    }
+  })
+
+  // Обновляем значение labelFieldValue, чтобы отобразить изменения в инпуте
+  labelFieldValue.value = updatedLabelArray.map((item) => item.text).join(' ')
+
+  store.updateAccount(props.index, {
+    ...account.value,
+    labelArray: updatedLabelArray,
+  })
+}
+
+const removeAccount = () => {
+  store.removeAccount(props.index)
+}
+
+// Для отображения меток в инпуте, так как inputу нужна строка, а не массив
+const labelsData = computed(() => {
+  // Если labelArray пустой, вернуть пустую строку
+  if (!props.account.labelArray || props.account.labelArray.length === 0) {
+    return ''
+  }
+
+  // Проверка каждого элемента и добавление ';' только если его нет
+  return props.account.labelArray
+    .map((item) => {
+      const text = item.text.trim()
+      return text.endsWith(';') ? text : `${text}`
+    })
+    .join(' ')
+})
+
+const validationSchema = yup.object({
+  login: yup.string().required(),
+  password: yup.string().required(),
+})
+
+const initialValues = computed<IAccountForm>(() => {
+  return {
+    login: props.account.login || '',
+    password: props.account.password || '',
+    labels: labelsData.value,
+    type: props.account.type,
+  }
+})
+
+const { defineField } = useForm({
+  validationSchema: validationSchema,
+  initialValues: initialValues.value,
+})
+
+const [loginFieldValue, loginFieldProps] = defineField('login', antConfig)
+const [passwordFieldValue, passwordFieldProps] = defineField('password', antConfig)
+const [labelFieldValue, labelFieldProps] = defineField('labels', antConfig)
+const [typeFieldValue] = defineField<'type', string>('type')
+
+const filterInput = (field: string, value: string = '') => {
+  if (field === 'login') {
+    loginFieldValue.value = value
+  } else if (field === 'password') {
+    passwordFieldValue.value = value
+  } else if (field === 'labels') {
+    let labelsValue = value
+    // Удаляем пробелы в начале строки
+    labelsValue = labelsValue.replace(/^\s+/, '')
+    // Удаляем лишние пробелы после ';' и добавляем один пробел
+    labelsValue = labelsValue.replace(/;\s+/g, '; ')
+    // Удаляем все пробелы, которые не идут после ';'
+    labelsValue = labelsValue.replace(/(?<!;)\s+/g, '')
+    // Не допускаем ввода других символов после ';'
+    labelsValue = labelsValue.replace(/;[^;\s]+/g, ';')
+    labelFieldValue.value = labelsValue
+  }
+}
+</script>
+
+<style scoped>
+.form-item {
+  margin-bottom: 1rem;
+}
+
+.invalid {
+  border: 1px solid red;
+}
+</style>
